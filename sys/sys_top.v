@@ -376,36 +376,10 @@ wire vs_hdmi;
 wire hs_hdmi;
 wire field;
 
-pattern_vg
-#(
-	.B(8), // Bits per channel
-	.X_BITS(12),
-	.Y_BITS(12),
-	.FRACTIONAL_BITS(12) // Number of fractional bits for ramp pattern
-)
-pattern_vg
-(
-	.reset(reset),
-	.clk_in(HDMI_TX_CLK),
-	.x(x),
-	.y(y[11:0]),
-	.vn_in(vs_hdmi),
-	.hn_in(hs_hdmi),
-	.dn_in(vde & hde),
-	.r_in(0),
-	.g_in(0),
-	.b_in(0),
-	.vn_out(HDMI_TX_VS),
-	.hn_out(HDMI_TX_HS),
-	.den_out(HDMI_TX_DE),
-	.r_out(hdmi_data[23:16]),
-	.g_out(hdmi_data[15:8]),
-	.b_out(hdmi_data[7:0]),
-	.total_active_pix(H_TOTAL - (H_FP + H_BP + H_SYNC)),
-	.total_active_lines(INTERLACED ? (V_TOTAL_0 - (V_FP_0 + V_BP_0 + V_SYNC_0)) + (V_TOTAL_1 - (V_FP_1 + V_BP_1 + V_SYNC_1)) : (V_TOTAL_0 - (V_FP_0 + V_BP_0 + V_SYNC_0))), // originally: 13'd480
-	.pattern(4),
-	.ramp_step(20'h0333)
-);
+assign HDMI_TX_VS = vs;
+assign HDMI_TX_HS = hs;
+assign HDMI_TX_DE = de; 
+assign hdmi_data = {r_out, g_out, b_out};
 
 wire reset;
 sysmem_lite sysmem
@@ -450,12 +424,21 @@ sysmem_lite sysmem
 
 /////////////////////////  HDMI output  /////////////////////////////////
 
-pll_hdmi pll_hdmi
-(
-	.refclk(FPGA_CLK1_50),
-	.rst(reset),
-	.outclk_0(HDMI_TX_CLK)
-);
+`ifdef LITE
+	pll_hdmi_lite pll_hdmi
+	(
+		.refclk(clk_vid),	
+		.rst(reset),
+		.outclk_0(HDMI_TX_CLK)
+	);
+`else
+	pll_hdmi pll_hdmi
+	(
+		.refclk(FPGA_CLK1_50),	
+		.rst(reset),
+		.outclk_0(HDMI_TX_CLK)
+	);
+`endif
 
 hdmi_config hdmi_config
 (

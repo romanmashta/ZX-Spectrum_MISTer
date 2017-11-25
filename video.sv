@@ -230,7 +230,12 @@ video_mixer #(.LINE_LENGTH(896), .HALF_DEPTH(1)) video_mixer
 
 	.hq2x(scale == 1),
 	.scanlines({scale==3, scale==2}),
+
+`ifdef LITE
+    .scandoubler(1'b1),
+`else
 	.scandoubler(scale || forced_scandoubler),
+`endif
 
 	.R(Rx),
 	.G(Gx),
